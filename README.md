@@ -26,3 +26,23 @@ The system implements three memory testing algorithms:
   - Real-time status display
 
 This project provides a foundation for understanding and implementing memory testing strategies while offering practical tools for RAM diagnostics and error analysis.
+
+please use python 3.13
+```
+git clone https://github.com/onesShade/KIDSVT_FRONT
+cd KIDSVT_FRONT/back
+git submodule add -f https://github.com/pybind/pybind11 extern/pybind11
+cmake -S . -B build
+cmake --build build --config Release
+mkdir "..\front\back_pyd" 
+copy "build\Release\vram_backend.cp313-win_amd64.pyd" "..\front\back_pyd\vram_backend.cp313-win_amd64.pyd"
+
+cd ../front
+
+py -m pip install pybind11-stubgen PyQt6 pyinstaller
+py -m pybind11_stubgen back_pyd.vram_backend --output-dir .
+py -m PyInstaller --noconfirm --onedir --windowed --name "KIDSVT_Sim" --add-data "back_pyd;back_pyd" main.py
+
+xcopy "..\back\res" "dist\KIDSVT_Sim\res" /E /I /H
+dist\KIDSVT_Sim\KIDSVT_Sim.exe
+```

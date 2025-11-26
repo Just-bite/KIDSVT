@@ -4,4 +4,4 @@ dist
 build
 res
 __pycache__
-back_pyd
+back_pyd/
