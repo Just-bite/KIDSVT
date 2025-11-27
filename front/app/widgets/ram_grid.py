@@ -27,7 +27,7 @@ class RamGridWidget(QWidget):
         self.table.verticalHeader().setVisible(True)
         
         font = QFont()
-        font.setPointSize(8)
+        font.setPointSize(12)
         self.table.setFont(font)
         
         self._resize_cells()
@@ -69,6 +69,10 @@ class RamGridWidget(QWidget):
             item = QTableWidgetItem()
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.table.setItem(row, col, item)
+        
+        # --- ИЗМЕНЕНИЕ: Принудительно ставим черный цвет текста ---
+        item.setForeground(QColor(AppConstants.COLOR_TEXT_DEFAULT))
+        # ----------------------------------------------------------
         
         if text is not None:
             item.setText(text)

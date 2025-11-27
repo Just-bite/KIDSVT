@@ -24,6 +24,8 @@ class TestingTab(QWidget):
         
         self.init_ui()
         self.refresh_test_list()
+        # Инициализация нулей при старте
+        self.update_all_grid_values()
 
     def init_ui(self):
         main_layout = QHBoxLayout(self)
@@ -51,7 +53,7 @@ class TestingTab(QWidget):
         # --- RIGHT PANEL ---
         right_panel = QVBoxLayout()
 
-        # Groop 1: Launch
+        # Group 1: Launch
         grp_setup = QGroupBox("Запуск теста")
         grp_setup_layout = QFormLayout()
         
@@ -71,7 +73,7 @@ class TestingTab(QWidget):
         grp_setup_layout.addRow(btn_layout)
         grp_setup.setLayout(grp_setup_layout)
 
-        # Groop 2: Control
+        # Group 2: Control
         grp_control = QGroupBox("Управление")
         grp_control_layout = QVBoxLayout()
         
@@ -104,7 +106,7 @@ class TestingTab(QWidget):
         grp_control_layout.addLayout(slider_layout)
         grp_control.setLayout(grp_control_layout)
 
-        # Groop 3: Status
+        # Group 3: Status
         grp_status = QGroupBox("Статус")
         grp_status_layout = QFormLayout()
         self.lbl_status = QLabel("Нет активного теста")
@@ -139,6 +141,9 @@ class TestingTab(QWidget):
         self.setup_grid_labels()
         self.ram_grid.reset_grid()
         
+        # Обновляем значения (скорее всего все нули)
+        self.update_all_grid_values()
+        
         self.timer.stop()
         self.btn_play_pause.setText("Старт (Авто)")
         self.btn_play_pause.setEnabled(False)
@@ -165,6 +170,29 @@ class TestingTab(QWidget):
         rows = self.ram_grid.rows
         self.ram_grid.table.setHorizontalHeaderLabels([str(15 - i) for i in range(16)])
         self.ram_grid.table.setVerticalHeaderLabels([f"0x{i:04X}" for i in range(rows)])
+
+    def update_row_values(self, addr):
+        """Читает слово по адресу и обновляет текст (0/1) в ячейках строки."""
+        if addr >= self.ram_grid.rows:
+            return
+            
+        try:
+            val = self.vram.read(addr)
+            for bit_pos in range(16):
+                # Извлекаем значение бита
+                bit_val = (val >> bit_pos) & 1
+                # Визуально: колонка 0 = 15-й бит (MSB), колонка 15 = 0-й бит (LSB)
+                col = 15 - bit_pos
+                
+                # Обновляем только текст, цвет не трогаем (передаем color=None неявно)
+                self.ram_grid.set_cell_state(addr, col, text=str(bit_val))
+        except Exception as e:
+            print(f"Error reading row {addr}: {e}")
+
+    def update_all_grid_values(self):
+        """Обновляет текст во всех ячейках таблицы."""
+        for addr in range(self.ram_grid.rows):
+            self.update_row_values(addr)
 
     def refresh_test_list(self):
         path = AppConstants.TEST_FILES_PATH
@@ -203,6 +231,8 @@ class TestingTab(QWidget):
             self.lbl_errors.setText("0")
             
             self.ram_grid.reset_grid()
+            # После сброса цвета обновляем цифры, так как память могла измениться
+            self.update_all_grid_values()
             
         except Exception as e:
             QMessageBox.critical(self, "Ошибка загрузки", str(e))
@@ -234,16 +264,21 @@ class TestingTab(QWidget):
             
             if res.type == TestRunner.StepResult.Type.WRITE:
                 self.lbl_last_action.setText(f"Запись по адресу 0x{addr:04X}")
+                # Сначала обновляем значения, так как произошла запись
+                self.update_row_values(addr)
                 self.ram_grid.highlight_row(addr, AppConstants.COLOR_BG_ACTIVE)
                 
             elif res.type == TestRunner.StepResult.Type.TEST_SUCCEEDED:
                 self.lbl_last_action.setText(f"Чтение 0x{addr:04X} -> OK")
+                # При чтении значения тоже полезно обновить (вдруг внешняя ошибка изменила их)
+                self.update_row_values(addr)
                 self.ram_grid.highlight_row(addr, AppConstants.COLOR_BG_SUCCESS)
                 
             elif res.type == TestRunner.StepResult.Type.TEST_FAILED:
                 self.current_error_count += 1
                 self.lbl_errors.setText(str(self.current_error_count))
                 self.lbl_last_action.setText(f"Чтение 0x{addr:04X} -> ОШИБКА")
+                self.update_row_values(addr)
                 self.ram_grid.highlight_row(addr, AppConstants.COLOR_BG_ERROR)
                 
             elif res.type == TestRunner.StepResult.Type.ENDED:
@@ -267,6 +302,9 @@ class TestingTab(QWidget):
         test_name = self.combo_tests.currentText()
         
         self.lbl_errors.setText(str(err_count))
+        
+        # Обновляем весь грид для точности отображения финального состояния
+        self.update_all_grid_values()
         
         for addr in errors:
             self.ram_grid.highlight_row(addr, AppConstants.COLOR_BG_ERROR)
