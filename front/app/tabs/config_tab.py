@@ -71,8 +71,6 @@ class ConfigTab(QWidget):
                 spacing: 8px;
                 font-size: 13px;
             }}
-            
-            /* -- NOT SELECTED -- */
             QRadioButton::indicator {{
                 width: 18px;
                 height: 18px;
@@ -80,14 +78,9 @@ class ConfigTab(QWidget):
                 border: 2px solid {dark_color};
                 background-color: {dark_color};
             }}
-            
-            /* -- ON HOVER -- */
             QRadioButton::indicator:hover {{
-                /* Можно добавить легкую прозрачность или изменить цвет рамки */
                 border-color: #555; 
             }}
-            
-            /* -- SELECTED -- */
             QRadioButton::indicator:checked {{
                 border: 2px solid {dark_color};
                 background-color: qradialgradient(
@@ -178,6 +171,10 @@ class ConfigTab(QWidget):
         main_layout.addLayout(left_panel, 7)
         main_layout.addLayout(right_panel, 3)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.update_all_grid_values()
+
     def _vram_to_grid(self, addr, bit):
         grid_row = addr
         grid_col = 15 - bit
@@ -187,6 +184,32 @@ class ConfigTab(QWidget):
         addr = row
         bit = 15 - col
         return addr, bit
+
+    def update_row_values(self, addr):
+        """
+        Читает слово по адресу из VRAM, разбивает на биты и обновляет 
+        состояние ячеек в строке (текст 0/1 и цвет).
+        """
+        try:
+            val = self.vram.read(addr)
+            for bit_pos in range(16):
+                bit_val = (val >> bit_pos) & 1
+                col = 15 - bit_pos
+                
+                err = self.vram.get_error(addr, bit_pos)
+                if err.name != "NO":
+                    bg_color = AppConstants.COLOR_BG_ERROR
+                else:
+                    bg_color = AppConstants.COLOR_BG_DEFAULT
+                
+                self.ram_grid.set_cell_state(addr, col, text=str(bit_val), color=bg_color)
+        except Exception as e:
+            print(f"Error updating row {addr}: {e}")
+
+    def update_all_grid_values(self):
+        rows = self.ram_grid.table.rowCount()
+        for i in range(rows):
+            self.update_row_values(i)
 
     def on_recreate_vram(self):
         """Full backend RAM recreation."""
@@ -206,6 +229,8 @@ class ConfigTab(QWidget):
         self.ram_grid.update_dimensions(words)
         self.ram_grid.table.setHorizontalHeaderLabels([str(15 - i) for i in range(16)])
         self.ram_grid.table.setVerticalHeaderLabels([f"0x{i:04X}" for i in range(words)])
+        
+        self.update_all_grid_values()
 
     def on_cell_clicked(self, row, col):
         addr, bit = self._grid_to_vram(row, col)
@@ -221,7 +246,7 @@ class ConfigTab(QWidget):
                 
                 msg = (f"Адрес слова: 0x{addr:04X}\n"
                        f"Бит: {bit}\n"
-                       f"Значение: {bit_val}\n"
+                       f"Значение (VRAM): {bit_val}\n"
                        f"Ошибка: {err_ru}")
                 QMessageBox.information(self, "Инфо", msg)
             except Exception as e:
@@ -254,8 +279,7 @@ class ConfigTab(QWidget):
         item.setData(Qt.ItemDataRole.UserRole, (addr, bit, key_name))
         self.list_faults.addItem(item)
         
-        r, c = self._vram_to_grid(addr, bit)
-        self.ram_grid.set_cell_state(r, c, text="!", color=AppConstants.COLOR_BG_ERROR)
+        self.update_row_values(addr)
 
     def remove_fault(self):
         items = self.list_faults.selectedItems()
@@ -264,8 +288,7 @@ class ConfigTab(QWidget):
             if data:
                 addr, bit, _ = data
                 self.vram.set_error(addr, bit, Vram.ErrType.NO)
-                r, c = self._vram_to_grid(addr, bit)
-                self.ram_grid.set_cell_state(r, c, text="", color=AppConstants.COLOR_BG_DEFAULT)
+                self.update_row_values(addr)
             self.list_faults.takeItem(self.list_faults.row(item))
 
     def clear_all_faults(self):
@@ -275,8 +298,7 @@ class ConfigTab(QWidget):
             if data:
                 addr, bit, _ = data
                 self.vram.set_error(addr, bit, Vram.ErrType.NO)
-                r, c = self._vram_to_grid(addr, bit)
-                self.ram_grid.set_cell_state(r, c, text="", color=AppConstants.COLOR_BG_DEFAULT)
+                self.update_row_values(addr)
             self.list_faults.takeItem(0)
 
     def save_config(self):

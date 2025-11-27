@@ -1,5 +1,8 @@
 import sys
+import os
+import ctypes 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget
+from PyQt6.QtGui import QIcon
 from app.utils.constants import AppConstants
 from app.tabs.config_tab import ConfigTab
 from app.tabs.testing_tab import TestingTab
@@ -47,7 +50,22 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.report_tab, "Результаты")
 
 if __name__ == "__main__":
+    if os.name == 'nt':
+
+        myappid = 'mycompany.kidsvt.ramsim.1.0' 
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        except ImportError:
+            pass
+
+
     app = QApplication(sys.argv)
+
+
+    if os.path.exists(AppConstants.ICON_PATH):
+        app_icon = QIcon(AppConstants.ICON_PATH)
+        app.setWindowIcon(app_icon)
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

@@ -41,9 +41,10 @@ cd ../front
 
 py -m pip install pybind11-stubgen PyQt6 pyinstaller
 py -m pybind11_stubgen back_pyd.vram_backend --output-dir .
-py -m PyInstaller --noconfirm --onedir --windowed --name "KIDSVT_Sim" --add-data "back_pyd;back_pyd" main.py
+py -m PyInstaller --noconfirm --onedir --windowed --name "RamTesting" --icon="icon.ico" --add-data "back_pyd;back_pyd" main.py
 
-xcopy "..\back\res" "dist\KIDSVT_Sim\res" /E /I /H
-cd dist\KIDSVT_Sim
-KIDSVT_Sim.exe
+xcopy "..\back\res" "dist\RamTesting\res" /E /I /H
+copy icon.ico "dist\RamTesting"
+cd dist\RamTesting
+RamTesting.exe
 ```

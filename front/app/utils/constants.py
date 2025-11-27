@@ -16,6 +16,7 @@ class AppConstants:
 
     # Paths
     TEST_FILES_PATH = r"./res"
+    ICON_PATH = r"icon.ico" 
 
     # Colors (HEX)
     COLOR_BG_DEFAULT = "#FFFFFF"
