@@ -29,8 +29,8 @@ This project provides a foundation for understanding and implementing memory tes
 
 please use python 3.13
 ```
-git clone https://github.com/onesShade/KIDSVT_FRONT
-cd KIDSVT_FRONT/back
+git clone https://github.com/onesShade/KIDSVT
+cd KIDSVT/back
 git submodule add -f https://github.com/pybind/pybind11 extern/pybind11
 cmake -S . -B build
 cmake --build build --config Release
@@ -44,5 +44,6 @@ py -m pybind11_stubgen back_pyd.vram_backend --output-dir .
 py -m PyInstaller --noconfirm --onedir --windowed --name "KIDSVT_Sim" --add-data "back_pyd;back_pyd" main.py
 
 xcopy "..\back\res" "dist\KIDSVT_Sim\res" /E /I /H
-dist\KIDSVT_Sim\KIDSVT_Sim.exe
+cd dist\KIDSVT_Sim
+KIDSVT_Sim.exe
 ```

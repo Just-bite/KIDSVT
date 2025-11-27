@@ -15,7 +15,7 @@ class ReportTab(QWidget):
 
         self.report_area = QPlainTextEdit()
         self.report_area.setReadOnly(True)
-        # Моноширинный шрифт
+
         font = QFont("Courier New", 10)
         self.report_area.setFont(font)
         self.report_area.setPlaceholderText("Ожидание результатов тестирования...")
@@ -35,14 +35,10 @@ class ReportTab(QWidget):
         layout.addLayout(controls_layout)
 
     def append_formatted_result(self, test_name, errors):
-        """Вывод результата простым текстом без рамок + группировка."""
         timestamp = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
         
-        # Считаем общее количество ошибок (событий)
         total_err_count = len(errors)
         
-        # Группировка: Уникальные адреса и их количество
-        # Counter создаст словарь {адрес: кол-во}
         error_counts = Counter(errors)
         unique_addresses = sorted(error_counts.keys())
         unique_count = len(unique_addresses)
@@ -69,9 +65,7 @@ class ReportTab(QWidget):
                     break
                 
                 count = error_counts[addr]
-                # Формат: 1. 0x00A1 (5)
-                # Если ошибка 1 раз, можно не писать число, или писать (1) для единообразия.
-                # Сделаем: если > 1, пишем число.
+
                 suffix = f" ({count})" if count > 1 else ""
                 lines.append(f"{i+1}. 0x{addr:04X}{suffix}")
         else:

@@ -1,4 +1,3 @@
-# main.py
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget
 from app.utils.constants import AppConstants
@@ -12,7 +11,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        # Инициализация Backend
         self.vram = Vram(AppConstants.DEFAULT_WORD_COUNT)
 
         self.setWindowTitle(AppConstants.WINDOW_TITLE)
@@ -23,7 +21,6 @@ class MainWindow(QMainWindow):
         
         self.setup_tabs()
         
-        # Настраиваем стили
         self.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -43,8 +40,6 @@ class MainWindow(QMainWindow):
         self.config_tab = ConfigTab(self.vram)
         self.testing_tab = TestingTab(self.vram, self.report_tab)
         
-        # СВЯЗКА ВНУТРИ: Когда ConfigTab создает новую память,
-        # передаем её в TestingTab
         self.config_tab.vram_changed.connect(self.testing_tab.set_new_vram)
         
         self.tabs.addTab(self.config_tab, "Конфигурация")

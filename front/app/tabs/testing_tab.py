@@ -28,7 +28,7 @@ class TestingTab(QWidget):
     def init_ui(self):
         main_layout = QHBoxLayout(self)
 
-        # --- ЛЕВАЯ ПАНЕЛЬ ---
+        # --- LEFT PANEL ---
         left_panel = QVBoxLayout()
         left_panel.addWidget(QLabel("Монитор памяти (Read-Only визуализация)"))
         
@@ -37,7 +37,7 @@ class TestingTab(QWidget):
         self.setup_grid_labels()
         left_panel.addWidget(self.ram_grid)
 
-        # Легенда
+        # Legend
         legend_layout = QHBoxLayout()
         legend_layout.setContentsMargins(0, 10, 0, 0)
         legend_layout.addStretch()
@@ -48,10 +48,10 @@ class TestingTab(QWidget):
         legend_layout.addStretch()
         left_panel.addLayout(legend_layout)
 
-        # --- ПРАВАЯ ПАНЕЛЬ ---
+        # --- RIGHT PANEL ---
         right_panel = QVBoxLayout()
 
-        # Группа 1: Запуск
+        # Groop 1: Launch
         grp_setup = QGroupBox("Запуск теста")
         grp_setup_layout = QFormLayout()
         
@@ -71,7 +71,7 @@ class TestingTab(QWidget):
         grp_setup_layout.addRow(btn_layout)
         grp_setup.setLayout(grp_setup_layout)
 
-        # Группа 2: Управление
+        # Groop 2: Control
         grp_control = QGroupBox("Управление")
         grp_control_layout = QVBoxLayout()
         
@@ -104,7 +104,7 @@ class TestingTab(QWidget):
         grp_control_layout.addLayout(slider_layout)
         grp_control.setLayout(grp_control_layout)
 
-        # Группа 3: Статус
+        # Groop 3: Status
         grp_status = QGroupBox("Статус")
         grp_status_layout = QFormLayout()
         self.lbl_status = QLabel("Нет активного теста")
@@ -132,18 +132,13 @@ class TestingTab(QWidget):
         self.update_speed_label()
 
     def set_new_vram(self, vram_obj, size):
-        """Полная замена объекта памяти на новый из ConfigTab."""
         self.vram = vram_obj
-        
-        # Сбрасываем текущий раннер, так как он привязан к старой памяти
         self.runner = None
         
-        # Обновляем визуальную сетку
         self.ram_grid.update_dimensions(size)
         self.setup_grid_labels()
         self.ram_grid.reset_grid()
         
-        # Сбрасываем статус UI
         self.timer.stop()
         self.btn_play_pause.setText("Старт (Авто)")
         self.btn_play_pause.setEnabled(False)
@@ -197,7 +192,6 @@ class TestingTab(QWidget):
         self.btn_play_pause.setText("Старт (Авто)")
         
         try:
-            # Создаем TestRunner с НОВЫМ self.vram
             self.runner = TestRunner(self.vram, full_path)
             self.current_error_count = 0
             

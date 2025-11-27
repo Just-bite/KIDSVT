@@ -4,13 +4,12 @@ from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QGroupBox,
                              QPushButton, QRadioButton, QButtonGroup, QComboBox, 
                              QListWidget, QFileDialog, QFormLayout, QSpinBox, 
                              QMessageBox, QListWidgetItem)
-from PyQt6.QtCore import Qt, pyqtSignal # <--- Добавлен pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from app.widgets.ram_grid import RamGridWidget
 from app.utils.constants import AppConstants
 from back_pyd.vram_backend import Vram
 
 class ConfigTab(QWidget):
-    # Сигнал, который отправляет новый объект Vram и его новый размер
     vram_changed = pyqtSignal(object, int)
 
     FAULT_TRANSLATIONS = {
@@ -43,7 +42,7 @@ class ConfigTab(QWidget):
     def init_ui(self):
         main_layout = QHBoxLayout(self)
 
-        # --- ЛЕВАЯ ПАНЕЛЬ ---
+        # --- LEFT PANEL ---
         left_panel = QVBoxLayout()
         
         tools_layout = QHBoxLayout()
@@ -64,48 +63,44 @@ class ConfigTab(QWidget):
         self.rb_view = QRadioButton("Инфо")
         self.rb_assign = QRadioButton("Назначение")
         
-        # Если хотите именно цвет тени, используйте ColorRole.Shadow, но обязательно через .color().name()
         pal = self.palette()
         dark_color = pal.color(pal.ColorRole.Dark).name() 
         
-        # 2. Формируем CSS с использованием f-строки
         rb_style = f"""
             QRadioButton {{
                 spacing: 8px;
                 font-size: 13px;
             }}
             
-            /* -- НЕ ВЫБРАНО -- */
+            /* -- NOT SELECTED -- */
             QRadioButton::indicator {{
                 width: 18px;
                 height: 18px;
                 border-radius: 11px;
                 border: 2px solid {dark_color};
-                background-color: {dark_color}; /* Полностью закрашен темным */
+                background-color: {dark_color};
             }}
             
-            /* -- ПРИ НАВЕДЕНИИ -- */
+            /* -- ON HOVER -- */
             QRadioButton::indicator:hover {{
                 /* Можно добавить легкую прозрачность или изменить цвет рамки */
                 border-color: #555; 
             }}
             
-            /* -- ВЫБРАНО -- */
+            /* -- SELECTED -- */
             QRadioButton::indicator:checked {{
                 border: 2px solid {dark_color};
-                /* Градиент: Белый центр -> резкий переход -> Темный край */
                 background-color: qradialgradient(
                     spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5,
                     stop:0 #ffffff,
-                    stop:0.4 #ffffff,      /* Размер белой точки (0.4 = 40% радиуса) */
-                    stop:0.45 {dark_color}, /* Начало темной границы (сглаживание краев) */
-                    stop:1 {dark_color}    /* Конец темной границы */
+                    stop:0.4 #ffffff,     
+                    stop:0.45 {dark_color}, 
+                    stop:1 {dark_color} 
                 );
             }}
         """
         self.rb_view.setStyleSheet(rb_style)
         self.rb_assign.setStyleSheet(rb_style)
-        # -------------------------------
 
         self.rb_view.setChecked(True)
         self.mode_btn_group = QButtonGroup()
@@ -123,9 +118,8 @@ class ConfigTab(QWidget):
         self.ram_grid.table.cellClicked.connect(self.on_cell_clicked)
         left_panel.addWidget(self.ram_grid)
 
-        # --- ПРАВАЯ ПАНЕЛЬ (без изменений) ---
+        # --- RIGHT PANEL ---
         right_panel = QVBoxLayout()
-        # ... (весь код правой панели как был раньше) ...
         grp_config = QGroupBox("Конфигурация (.json)")
         grp_config_layout = QHBoxLayout()
         btn_load = QPushButton("Загрузить")
@@ -195,19 +189,16 @@ class ConfigTab(QWidget):
         return addr, bit
 
     def on_recreate_vram(self):
-        """Полное создание НОВОГО объекта памяти."""
+        """Full backend RAM recreation."""
         word_count = self.spin_words.value()
         
-        # 1. Создаем абсолютно новый объект, а не перезаписываем старый
         new_vram = Vram(word_count)
         self.vram = new_vram
         
-        # 2. Обновляем UI локально
         self.spin_fault_addr.setRange(0, word_count - 1)
         self.list_faults.clear()
         self.apply_grid_settings()
         
-        # 3. Сообщаем всем (Main -> TestingTab) о подмене
         self.vram_changed.emit(self.vram, word_count)
 
     def apply_grid_settings(self):
@@ -319,10 +310,8 @@ class ConfigTab(QWidget):
             words = config.get("ram_size_words", 16)
             self.spin_words.setValue(words)
             
-            # Пересоздаем память (это также вызовет сигнал vram_changed)
             self.on_recreate_vram()
             
-            # Накидываем ошибки на НОВУЮ память
             for f in config.get("faults", []):
                 self.add_fault((f["addr"], f["bit"], f["type"]))
                 
