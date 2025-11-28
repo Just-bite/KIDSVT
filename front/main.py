@@ -1,6 +1,8 @@
-# main.py
 import sys
+import os
+import ctypes 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget
+from PyQt6.QtGui import QIcon
 from app.utils.constants import AppConstants
 from app.tabs.config_tab import ConfigTab
 from app.tabs.testing_tab import TestingTab
@@ -12,7 +14,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        # Инициализация Backend
         self.vram = Vram(AppConstants.DEFAULT_WORD_COUNT)
 
         self.setWindowTitle(AppConstants.WINDOW_TITLE)
@@ -23,7 +24,6 @@ class MainWindow(QMainWindow):
         
         self.setup_tabs()
         
-        # Настраиваем стили
         self.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -43,8 +43,6 @@ class MainWindow(QMainWindow):
         self.config_tab = ConfigTab(self.vram)
         self.testing_tab = TestingTab(self.vram, self.report_tab)
         
-        # СВЯЗКА ВНУТРИ: Когда ConfigTab создает новую память,
-        # передаем её в TestingTab
         self.config_tab.vram_changed.connect(self.testing_tab.set_new_vram)
         
         self.tabs.addTab(self.config_tab, "Конфигурация")
@@ -52,7 +50,22 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.report_tab, "Результаты")
 
 if __name__ == "__main__":
+    if os.name == 'nt':
+
+        myappid = 'mycompany.kidsvt.ramsim.1.0' 
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        except ImportError:
+            pass
+
+
     app = QApplication(sys.argv)
+
+
+    if os.path.exists(AppConstants.ICON_PATH):
+        app_icon = QIcon(AppConstants.ICON_PATH)
+        app.setWindowIcon(app_icon)
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

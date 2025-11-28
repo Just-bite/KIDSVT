@@ -23,12 +23,11 @@ class RamGridWidget(QWidget):
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         
-        # Заголовки
         self.table.horizontalHeader().setVisible(True)
         self.table.verticalHeader().setVisible(True)
         
         font = QFont()
-        font.setPointSize(8)
+        font.setPointSize(12)
         self.table.setFont(font)
         
         self._resize_cells()
@@ -46,9 +45,7 @@ class RamGridWidget(QWidget):
         v_header.setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
 
     def update_dimensions(self, rows):
-        """Обновление количества строк (слов)."""
         self.rows = int(rows)
-        # Колонки фиксированы (16 бит)
         self.cols = AppConstants.GRID_COLS
         
         self.table.setRowCount(self.rows)
@@ -73,6 +70,10 @@ class RamGridWidget(QWidget):
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.table.setItem(row, col, item)
         
+        # --- ИЗМЕНЕНИЕ: Принудительно ставим черный цвет текста ---
+        item.setForeground(QColor(AppConstants.COLOR_TEXT_DEFAULT))
+        # ----------------------------------------------------------
+        
         if text is not None:
             item.setText(text)
         
@@ -80,7 +81,6 @@ class RamGridWidget(QWidget):
             item.setBackground(QColor(color))
 
     def highlight_row(self, row, color):
-        """Подсветка всей строки (слова)."""
         if row >= self.rows:
             return
         for c in range(self.cols):

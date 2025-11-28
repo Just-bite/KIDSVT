@@ -6,23 +6,23 @@ class AppConstants:
     WINDOW_WIDTH = 1300
     WINDOW_HEIGHT = 800
     
-    # Размеры по умолчанию
+    # Sizes by dafault
     DEFAULT_WORD_COUNT = 16
     BITS_PER_WORD = 16
     
-    # Визуализация
+    # Visualisation
     GRID_COLS = 16
     DEFAULT_CELL_SIZE = 40
 
-    # Пути
+    # Paths
     TEST_FILES_PATH = r"./res"
+    ICON_PATH = r"icon.ico" 
 
-    # Цвета (HEX)
+    # Colors (HEX)
     COLOR_BG_DEFAULT = "#FFFFFF"
-    COLOR_BG_ACTIVE = "#FFFACD"   # Светло-желтый (текущая операция)
-    COLOR_BG_SUCCESS = "#90EE90"  # Светло-зеленый (проверено, ок)
+    COLOR_BG_ACTIVE = "#FFFACD"  
+    COLOR_BG_SUCCESS = "#90EE90"
     
-    # Изменено на насыщенный красный по просьбе
     COLOR_BG_ERROR = "#FF3333"    
     
     COLOR_TEXT_DEFAULT = "#000000"

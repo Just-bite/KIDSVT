@@ -1,5 +1,6 @@
 *.json
 *.spec
+
 dist
 build
 res

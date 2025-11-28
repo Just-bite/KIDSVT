@@ -24,11 +24,13 @@ class TestingTab(QWidget):
         
         self.init_ui()
         self.refresh_test_list()
+        # Инициализация нулей при старте
+        self.update_all_grid_values()
 
     def init_ui(self):
         main_layout = QHBoxLayout(self)
 
-        # --- ЛЕВАЯ ПАНЕЛЬ ---
+        # --- LEFT PANEL ---
         left_panel = QVBoxLayout()
         left_panel.addWidget(QLabel("Монитор памяти (Read-Only визуализация)"))
         
@@ -37,7 +39,7 @@ class TestingTab(QWidget):
         self.setup_grid_labels()
         left_panel.addWidget(self.ram_grid)
 
-        # Легенда
+        # Legend
         legend_layout = QHBoxLayout()
         legend_layout.setContentsMargins(0, 10, 0, 0)
         legend_layout.addStretch()
@@ -48,10 +50,10 @@ class TestingTab(QWidget):
         legend_layout.addStretch()
         left_panel.addLayout(legend_layout)
 
-        # --- ПРАВАЯ ПАНЕЛЬ ---
+        # --- RIGHT PANEL ---
         right_panel = QVBoxLayout()
 
-        # Группа 1: Запуск
+        # Group 1: Launch
         grp_setup = QGroupBox("Запуск теста")
         grp_setup_layout = QFormLayout()
         
@@ -71,7 +73,7 @@ class TestingTab(QWidget):
         grp_setup_layout.addRow(btn_layout)
         grp_setup.setLayout(grp_setup_layout)
 
-        # Группа 2: Управление
+        # Group 2: Control
         grp_control = QGroupBox("Управление")
         grp_control_layout = QVBoxLayout()
         
@@ -104,7 +106,7 @@ class TestingTab(QWidget):
         grp_control_layout.addLayout(slider_layout)
         grp_control.setLayout(grp_control_layout)
 
-        # Группа 3: Статус
+        # Group 3: Status
         grp_status = QGroupBox("Статус")
         grp_status_layout = QFormLayout()
         self.lbl_status = QLabel("Нет активного теста")
@@ -132,18 +134,16 @@ class TestingTab(QWidget):
         self.update_speed_label()
 
     def set_new_vram(self, vram_obj, size):
-        """Полная замена объекта памяти на новый из ConfigTab."""
         self.vram = vram_obj
-        
-        # Сбрасываем текущий раннер, так как он привязан к старой памяти
         self.runner = None
         
-        # Обновляем визуальную сетку
         self.ram_grid.update_dimensions(size)
         self.setup_grid_labels()
         self.ram_grid.reset_grid()
         
-        # Сбрасываем статус UI
+        # Обновляем значения (скорее всего все нули)
+        self.update_all_grid_values()
+        
         self.timer.stop()
         self.btn_play_pause.setText("Старт (Авто)")
         self.btn_play_pause.setEnabled(False)
@@ -171,6 +171,29 @@ class TestingTab(QWidget):
         self.ram_grid.table.setHorizontalHeaderLabels([str(15 - i) for i in range(16)])
         self.ram_grid.table.setVerticalHeaderLabels([f"0x{i:04X}" for i in range(rows)])
 
+    def update_row_values(self, addr):
+        """Читает слово по адресу и обновляет текст (0/1) в ячейках строки."""
+        if addr >= self.ram_grid.rows:
+            return
+            
+        try:
+            val = self.vram.read(addr)
+            for bit_pos in range(16):
+                # Извлекаем значение бита
+                bit_val = (val >> bit_pos) & 1
+                # Визуально: колонка 0 = 15-й бит (MSB), колонка 15 = 0-й бит (LSB)
+                col = 15 - bit_pos
+                
+                # Обновляем только текст, цвет не трогаем (передаем color=None неявно)
+                self.ram_grid.set_cell_state(addr, col, text=str(bit_val))
+        except Exception as e:
+            print(f"Error reading row {addr}: {e}")
+
+    def update_all_grid_values(self):
+        """Обновляет текст во всех ячейках таблицы."""
+        for addr in range(self.ram_grid.rows):
+            self.update_row_values(addr)
+
     def refresh_test_list(self):
         path = AppConstants.TEST_FILES_PATH
         self.combo_tests.clear()
@@ -197,7 +220,6 @@ class TestingTab(QWidget):
         self.btn_play_pause.setText("Старт (Авто)")
         
         try:
-            # Создаем TestRunner с НОВЫМ self.vram
             self.runner = TestRunner(self.vram, full_path)
             self.current_error_count = 0
             
@@ -209,6 +231,8 @@ class TestingTab(QWidget):
             self.lbl_errors.setText("0")
             
             self.ram_grid.reset_grid()
+            # После сброса цвета обновляем цифры, так как память могла измениться
+            self.update_all_grid_values()
             
         except Exception as e:
             QMessageBox.critical(self, "Ошибка загрузки", str(e))
@@ -240,16 +264,21 @@ class TestingTab(QWidget):
             
             if res.type == TestRunner.StepResult.Type.WRITE:
                 self.lbl_last_action.setText(f"Запись по адресу 0x{addr:04X}")
+                # Сначала обновляем значения, так как произошла запись
+                self.update_row_values(addr)
                 self.ram_grid.highlight_row(addr, AppConstants.COLOR_BG_ACTIVE)
                 
             elif res.type == TestRunner.StepResult.Type.TEST_SUCCEEDED:
                 self.lbl_last_action.setText(f"Чтение 0x{addr:04X} -> OK")
+                # При чтении значения тоже полезно обновить (вдруг внешняя ошибка изменила их)
+                self.update_row_values(addr)
                 self.ram_grid.highlight_row(addr, AppConstants.COLOR_BG_SUCCESS)
                 
             elif res.type == TestRunner.StepResult.Type.TEST_FAILED:
                 self.current_error_count += 1
                 self.lbl_errors.setText(str(self.current_error_count))
                 self.lbl_last_action.setText(f"Чтение 0x{addr:04X} -> ОШИБКА")
+                self.update_row_values(addr)
                 self.ram_grid.highlight_row(addr, AppConstants.COLOR_BG_ERROR)
                 
             elif res.type == TestRunner.StepResult.Type.ENDED:
@@ -273,6 +302,9 @@ class TestingTab(QWidget):
         test_name = self.combo_tests.currentText()
         
         self.lbl_errors.setText(str(err_count))
+        
+        # Обновляем весь грид для точности отображения финального состояния
+        self.update_all_grid_values()
         
         for addr in errors:
             self.ram_grid.highlight_row(addr, AppConstants.COLOR_BG_ERROR)
