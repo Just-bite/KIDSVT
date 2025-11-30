@@ -1,0 +1,31 @@
+
+
+
+0 loop
+    0x5555 write
+asc endloop
+
+
+0 loop
+    0x5555 read equal? assert!
+asc endloop
+
+
+0 loop
+    0xAAAA write
+asc endloop
+
+
+0 loop
+    0xAAAA read equal? assert!
+asc endloop
+
+
+0 loop
+    0 write
+asc endloop
+
+
+0 loop
+    0 read equal? assert!
+asc endloop

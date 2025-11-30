@@ -1,0 +1,29 @@
+0 loop
+    0 write read 0 equal? assert!
+asc endloop
+
+1 loop
+i
+
+0 loop
+	cur 
+	
+	cur write read equal? assert!
+	
+	i
+	0 loop
+		cur i equal? not then
+			read 0 equal? assert!			
+		endthen
+		
+		
+	asc endloop
+	drop
+	
+	0 loop
+		0 write read 0 equal? assert!
+	asc endloop
+	
+asc endloop
+
+lsh i= endloop
